@@ -44,7 +44,7 @@ class GitService implements GitServiceInterface{
 
 
   pushLocalBrachToRemoteBranch( remoteRepoName: string, localBranchName: string) {
-    const output = execFileSync("git", ["push", remoteRepoName, `${localBranchName}`])
+    const output = execFileSync("git", ["push", remoteRepoName, `"${localBranchName}"`])
     console.log(output)
   }
 
