@@ -1,15 +1,20 @@
 import repoInfoDTO from "./DTOs/repoInfo.DTO.js"
 
 interface GitServiceInterface {
-     addSafeDirectory(pathProject: string): void,
-    
-      getGitRemoteRepositoryLink(remoteRepoName: string): string,
-    
-      getCurrentBranch(): string,
+  getPathProject(): string
+  
+  addSafeDirectory(pathProject: string): void
 
-      getRepoInfo(remoteRepoLink: string): repoInfoDTO
+  getGitRemoteRepositoryLink(remoteRepoName: string): string
 
-      getPathProject(): string
+  getRepoInfo(remoteRepoLink: string): repoInfoDTO
+    
+  getCurrentBranch(): string
+  
+  getRemoteRepoName(): string[] 
+
+  pushLocalBrachToRemoteBranch( remoteRepoName: string, localBranchName: string): string
+
 }
 
 export default GitServiceInterface

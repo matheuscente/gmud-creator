@@ -5,11 +5,11 @@ import repoInfoDTO from "../models/interfaces/DTOs/repoInfo.DTO.js";
 
 class GitService implements GitServiceInterface{
 
-  getPathProject(): string {
+  getPathProject = (): string => {
     return execSync('git rev-parse --show-toplevel').toString().trim()
   };
   
-    addSafeDirectory = (pathProject: string): void => {
+  addSafeDirectory = (pathProject: string): void => {
     execSync(`git config --global --add safe.directory ${pathProject}`);
   };
 
@@ -17,7 +17,7 @@ class GitService implements GitServiceInterface{
     return execSync(`git remote get-url ${remoteRepoName}`).toString().trim();
   };
 
-  getRepoInfo(remoteRepoLink: string): repoInfoDTO {
+  getRepoInfo =(remoteRepoLink: string): repoInfoDTO => {
     const match = remoteRepoLink.match(
       /github\.com[:/]([^/]+)\/([^/]+?)(?:\.git)?\/?$/,
     );
@@ -37,15 +37,14 @@ class GitService implements GitServiceInterface{
     return execSync("git branch --show-current").toString().trim();
   };
 
-  getRemoteRepoName = () => { 
+  getRemoteRepoName = (): string[] => { 
     const output =  execFileSync('git', ['remote']).toString().trim()
     return output.split(/\r?\n/)
    }
 
 
-  pushLocalBrachToRemoteBranch( remoteRepoName: string, localBranchName: string) {
-    const output = execFileSync("git", ["push", remoteRepoName, `${localBranchName}`]).toString()
-    console.log(output)
+  pushLocalBrachToRemoteBranch = ( remoteRepoName: string, localBranchName: string): string => {
+    return execFileSync("git", ["push", remoteRepoName, `${localBranchName}`]).toString()
   }
 
 }

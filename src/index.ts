@@ -7,8 +7,6 @@ import { Octokit } from "@octokit/rest";
 
 //normaliza instâncias dos serviços
 const gitService = container.gitService;
-const gitAuthService = container.gitAuthService;
-const githubService = container.githubService;
 
 const main = async () => {
   try {
@@ -20,9 +18,11 @@ const main = async () => {
    //seta pasta do projeto como repo seguro no git
   const pathProject = gitService.getPathProject();
   gitService.addSafeDirectory(pathProject);
-            
+
+  //obtem branch local
   const localBrach = gitService.getCurrentBranch()
 
+  //obtem os nomes dos repos remoto
   const nomesRepoRemoto = gitService.getRemoteRepoName()
   let remoteRepoName: string = nomesRepoRemoto.length === 1 ? nomesRepoRemoto[0] : ""
 
@@ -32,25 +32,6 @@ const main = async () => {
       rl.close()
       throw new Error("Não foram encontrados repositórios remotos, por gentileza, cadastre 1 e tente novamente.")
     }
-
-  const remoteRepository = gitService.getGitRemoteRepositoryLink(remoteRepoName);
-  const repoInfo = gitService.getRepoInfo(remoteRepository)
-
-    const credentials = gitAuthService.getCredential("https", "github.com");
-
-    const octokit = new Octokit({
-      auth: credentials.password,
-    });
-
-    githubService.setOctokit(octokit);
-
-    const githubAuthenticatedUser = await githubService.getUser();
-    const remoteRepo = await githubService.getGithubRemoteRepo(repoInfo)
-
-    console.log(`usuário autenticado: ${githubAuthenticatedUser.login}`);
-    console.log(`nome da branch local: ${localBrach}`)
-    console.log(`repo remoto:\n${JSON.stringify(remoteRepo, null, 2)}`)
-    console.log(`nome repo remoto: ${remoteRepoName}`)
 
     gitService.pushLocalBrachToRemoteBranch(remoteRepoName, localBrach)
 
