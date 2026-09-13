@@ -4,9 +4,23 @@ import GithubUserDTO from "../DTOs/githubUser.dto.js";
 import repoInfoDTO from "../../git/models/interfaces/DTOs/repoInfo.DTO.js";
 import GithubRepoDTO from "../DTOs/githubRepo.DTO.js";
 import GithubRemoteRepoBranch from "../DTOs/githubRemoteBranch.DTO.js";
+import GetTemplate from "../interfaces/getTemplate.interface.js";
 
 class GithubService implements GithubServiceInterface {
   constructor(private octokit?: Octokit) {}
+
+  getPRTemplate(data: GetTemplate): Promise<string> {
+
+    return this.execute<string>(async (octokit) => {
+      const response = await octokit.rest.repos.getContent({...data})
+
+      if(Array.isArray(response.data)) throw new Error("O caminho informado não é um arquivo")
+
+      if(response.data.type != 'file') throw new Error("O conteúdo encontrado não é um arquivo")
+
+      return Buffer.from(response.data.content, "base64").toString()
+    })
+  }
 
   setOctokit(octokit: Octokit) {
     this.octokit = octokit;
@@ -42,25 +56,25 @@ async getGithubRemoteRepo(data: repoInfoDTO): Promise<GithubRepoDTO> {
     });
   }
 
-  async getRemoteBranch(data: repoInfoDTO, localBranchName: string): Promise<GithubRemoteRepoBranch | undefined> {
-    return this.execute<GithubRemoteRepoBranch | undefined>(async (octokit) => {
-        const hasRepo = await this.getGithubRemoteRepo(data)
-        if(!hasRepo || (hasRepo && Object.keys(hasRepo).length === 0)) {
-            throw new Error("Repositório remoto não encontrado")
-        }
+  // async getRemoteBranch(data: repoInfoDTO, localBranchName: string): Promise<GithubRemoteRepoBranch | undefined> {
+  //   return this.execute<GithubRemoteRepoBranch | undefined>(async (octokit) => {
+  //       const hasRepo = await this.getGithubRemoteRepo(data)
+  //       if(!hasRepo || (hasRepo && Object.keys(hasRepo).length === 0)) {
+  //           throw new Error("Repositório remoto não encontrado")
+  //       }
 
-        const branches = (await octokit.rest.repos.listBranches({...data}))
-          .data
-          .find(branch => branch.name === localBranchName)
+  //       const branches = (await octokit.rest.repos.listBranches({...data}))
+  //         .data
+  //         .find(branch => branch.name === localBranchName)
 
-        if(!branches) return undefined
+  //       if(!branches) return undefined
 
-        return {
-          name: branches.name,
-          protected: branches.protected
-        }
-    })
-  }
+  //       return {
+  //         name: branches.name,
+  //         protected: branches.protected
+  //       }
+  //   })
+  // }
 }
 
 export default GithubService;

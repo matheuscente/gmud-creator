@@ -1,19 +1,30 @@
 #!/usr/bin/env node
 
-import { createInterface } from "readline/promises";
 import { container } from "./app/dependencies/dependencies-container.js";
-import process from "process";
 import Flows from "./app/flows/flows.js";
 
 //normaliza instâncias dos serviços
 const gitService = container.gitService;
-const flows = new Flows()
+const gitAuthService = container.gitAuthService
+const githubService = container.githubService
+const flows = new Flows(gitService, githubService, gitAuthService)
+
+//fluxos
+const initialConfig = flows.initialConfig
+const updateRemoteBranchFlow = flows.updateRemoteBranch
+const fillPrTemplateFlow = flows.fillPrTemplate
 
 const main = async () => {
   try {
+    
+    //configurações iniciais
+    initialConfig()
 
-    const isRemoteBranchCreated = await flows.createRemoteBranch(gitService)
-    console.log(isRemoteBranchCreated)
+    await updateRemoteBranchFlow()
+
+    //executa fluxo que preenche os dados do arquivo pr
+    const filledPrTemplate = await fillPrTemplateFlow()
+    
 
   } catch (err) {
     if (err instanceof Error) console.log(err.message)
