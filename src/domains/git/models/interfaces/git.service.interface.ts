@@ -11,8 +11,8 @@ interface GitServiceInterface {
     
   getCurrentBranch(): string
   
-  getRemoteRepoName(): string[] 
-
+  getRemoteRepoName(): string[]
+  
   pushLocalBrachToRemoteBranch( remoteRepoName: string, localBranchName: string): string
 
 }
