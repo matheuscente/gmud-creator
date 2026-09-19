@@ -13,6 +13,7 @@ const flows = new Flows(gitService, githubService, gitAuthService)
 const initialConfig = flows.initialConfig
 const updateRemoteBranchFlow = flows.updateRemoteBranch
 const fillPrTemplateFlow = flows.fillPrTemplate
+const createPrFlow = flows.createPullRequest
 
 const main = async () => {
   try {
@@ -20,10 +21,14 @@ const main = async () => {
     //configurações iniciais
     initialConfig()
 
-    await updateRemoteBranchFlow()
+    //fluxo de update branch remota
+    const dataRemoteRepo = await updateRemoteBranchFlow()
 
     //executa fluxo que preenche os dados do arquivo pr
-    const filledPrTemplate = await fillPrTemplateFlow()
+    const filledPrTemplate = await fillPrTemplateFlow(dataRemoteRepo)
+
+    //fluxo que cria a pr
+    await createPrFlow(dataRemoteRepo, filledPrTemplate)
     
 
   } catch (err) {

@@ -6,6 +6,8 @@ import { Octokit } from "@octokit/rest";
 import {createInterface} from 'node:readline/promises';
 import DataTemplatePr from "./interfaces/dataTemplatePr.interface.js";
 import Actions from "./interfaces/actions.type.js";
+import CreatePullRequestDTO from "../../domains/github/DTOs/createPr.DTO.js";
+import RemoteRepoData from "../../shared/interfaces/remoteRepoData.interface.js";
 
 
 class Flows {
@@ -15,7 +17,8 @@ class Flows {
     private gitAuthService: GitAuthService
   ) {}
 
-  updateRemoteBranch = async (): Promise<string> => {
+  //este fluxo retorna o nome repo remoto
+  updateRemoteBranch = async (): Promise<RemoteRepoData> => {
       const rl = createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -51,10 +54,15 @@ class Flows {
       }
 
     rl.close();
-    return this.gitService.pushLocalBrachToRemoteBranch(remoteRepoName, localBrach);
+    this.gitService.pushLocalBrachToRemoteBranch(remoteRepoName, localBrach);
+    return {
+              remoteRepoName,
+              branch: localBrach
+            }
+    
   };
 
-  fillPrTemplate = async () => {
+  fillPrTemplate = async (dataRemoteRepo: RemoteRepoData) => {
     //obtem o template
     const argumentsGetTemplate: GetTemplate = {
       owner: "vexur-startup",
@@ -63,8 +71,7 @@ class Flows {
       ref: "main"
     }
 
-    const remoteBranchName = this.gitService.getCurrentBranch()
-    const action = this.getAction(remoteBranchName)
+    const actions = this.gitService.getBranchInfos(dataRemoteRepo.branch, dataRemoteRepo.remoteRepoName)
 
     const prTemplate = await this.githubService.getPRTemplate(argumentsGetTemplate)
     const rl = createInterface({input: process.stdin, output: process.stdout})
@@ -74,7 +81,7 @@ class Flows {
       const mondayTask = await rl.question('link da tarefa monday: ')
 
       const templateAtualizado = this.fillTemplate({
-        action: action,
+        action: actions.action,
         change: summaryChange,
         mondayURL: mondayTask
       }, prTemplate)
@@ -99,6 +106,28 @@ class Flows {
       auth: password
     })
     this.githubService.setOctokit(octokit)
+  }
+
+  createPullRequest = async (remoteRepo: RemoteRepoData, filledPrTemplate: string) => {
+    const RemoteRepoLink = this.gitService.getGitRemoteRepositoryLink(remoteRepo.remoteRepoName)
+    const remoteRepoInfos = this.gitService.getRepoInfo(RemoteRepoLink)
+    const branchInfos = this.gitService.getBranchInfos(remoteRepo.branch, remoteRepo.remoteRepoName)
+        
+    const data:CreatePullRequestDTO = {
+      owner: remoteRepoInfos.owner,
+      repo: remoteRepoInfos.repo,
+      title: branchInfos.title,
+      head: remoteRepo.branch,
+      base: branchInfos.remoteBranch,
+      body: filledPrTemplate
+    }
+
+
+    const pr = await this.githubService.createPr(data)
+
+    console.log(pr)
+
+
   }
 
  private fillTemplate = (data: DataTemplatePr, template: string): string => {
@@ -139,24 +168,7 @@ class Flows {
    return template
  }
 
- private getAction = (branchName: string): Actions => {
-  const actions: Actions[] = ["feat", "fix", "hotfix", "infra", "refactor"]
-  
-  let action = branchName.split("-")
-
-  let isValidAction = actions.includes((action[0]) as Actions)
-
-  if(!isValidAction) {
-    action = branchName.split("(")
-  }
-
-  isValidAction = actions.includes((action[0]) as Actions)
-
-
-  if(!isValidAction) throw new Error("ação de mudança inválida, verifique nome da branch")
-
-   return action[0] as Actions
- }
+ 
 }
 
 export default Flows;

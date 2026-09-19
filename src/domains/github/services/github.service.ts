@@ -5,6 +5,7 @@ import repoInfoDTO from "../../git/models/interfaces/DTOs/repoInfo.DTO.js";
 import GithubRepoDTO from "../DTOs/githubRepo.DTO.js";
 import GithubRemoteRepoBranch from "../DTOs/githubRemoteBranch.DTO.js";
 import GetTemplate from "../interfaces/getTemplate.interface.js";
+import CreatePullRequestDTO from "../DTOs/createPr.DTO.js";
 
 class GithubService implements GithubServiceInterface {
   constructor(private octokit?: Octokit) {}
@@ -56,25 +57,32 @@ async getGithubRemoteRepo(data: repoInfoDTO): Promise<GithubRepoDTO> {
     });
   }
 
-  // async getRemoteBranch(data: repoInfoDTO, localBranchName: string): Promise<GithubRemoteRepoBranch | undefined> {
-  //   return this.execute<GithubRemoteRepoBranch | undefined>(async (octokit) => {
-  //       const hasRepo = await this.getGithubRemoteRepo(data)
-  //       if(!hasRepo || (hasRepo && Object.keys(hasRepo).length === 0)) {
-  //           throw new Error("Repositório remoto não encontrado")
-  //       }
+   async getRemoteBranch(data: repoInfoDTO, localBranchName: string): Promise<GithubRemoteRepoBranch | undefined> {
+     return this.execute<GithubRemoteRepoBranch | undefined>(async (octokit) => {
+         const hasRepo = await this.getGithubRemoteRepo(data)
+         if(!hasRepo || (hasRepo && Object.keys(hasRepo).length === 0)) {
+             throw new Error("Repositório remoto não encontrado")
+         }
 
-  //       const branches = (await octokit.rest.repos.listBranches({...data}))
-  //         .data
-  //         .find(branch => branch.name === localBranchName)
+         const branches = (await octokit.rest.repos.listBranches({...data}))
+           .data
+           .find(branch => branch.name === localBranchName)
 
-  //       if(!branches) return undefined
+         if(!branches) return undefined
 
-  //       return {
-  //         name: branches.name,
-  //         protected: branches.protected
-  //       }
-  //   })
-  // }
+         return {
+           name: branches.name,
+           protected: branches.protected
+         }
+     })
+   }
+
+   async createPr(data: CreatePullRequestDTO) {
+    return this.execute<unknown>(async (octokit) => {
+      const pr = await octokit.rest.pulls.create({...data})
+      return pr
+    })
+   }
 }
 
 export default GithubService;
